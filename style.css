@@ -501,4 +501,20 @@ select:hover {
   .btn.mini {
     width: 100%;
   }
+
+  .btn.pdf {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+.btn.pdf:hover {
+  background: #020617;
+}
+@media (max-width: 520px) {
+  .btn.primario,
+  .btn.secundario,
+  .btn.pdf {
+    width: 100%;
+  }
+}
 }
