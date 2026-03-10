@@ -3,6 +3,7 @@ const listaProdutos = document.getElementById("listaProdutos");
 const btnAdicionarProduto = document.getElementById("btnAdicionarProduto");
 const btnCalcular = document.getElementById("btnCalcular");
 const btnLimpar = document.getElementById("btnLimpar");
+const btnGerarPdf = document.getElementById("btnGerarPdf");
 
 const formaPagamento = document.getElementById("formaPagamento");
 const percentualTaxaEl = document.getElementById("percentualTaxa");
@@ -141,6 +142,309 @@ function criarProdutoCard() {
     input.addEventListener("input", calcularTudo);
   });
 }
+
+function coletarProdutosParaRelatorio() {
+  const cards = document.querySelectorAll(".produto-card");
+
+  return Array.from(cards).map((card, index) => {
+    const nome = card.querySelector(".produto-nome").value || `Produto ${index + 1}`;
+    const valor = numero(card.querySelector(".produto-valor").value);
+    const embalagem = numero(card.querySelector(".produto-embalagem").value);
+    const usado = numero(card.querySelector(".produto-usado").value);
+
+    let custoPorMl = 0;
+    let custoUsado = 0;
+
+    if (valor > 0 && embalagem > 0) {
+      custoPorMl = valor / embalagem;
+      custoUsado = custoPorMl * usado;
+    }
+
+    return {
+      nome,
+      valor,
+      embalagem,
+      usado,
+      custoPorMl,
+      custoUsado
+    };
+  });
+}
+
+function obterDadosRelatorio() {
+  const produtos = coletarProdutosParaRelatorio();
+
+  const totalProdutos = produtos.reduce((acc, item) => acc + item.custoUsado, 0);
+
+  const kmRodado = numero(kmRodadoInput.value);
+  const consumoVeiculo = numero(consumoVeiculoInput.value);
+  const precoGasolina = numero(precoGasolinaInput.value);
+  const desgasteKm = numero(desgasteKmInput.value);
+
+  const maoDeObra = numero(maoDeObraInput.value);
+  const outrosCustos = numero(outrosCustosInput.value);
+  const valorCobrado = numero(valorCobradoInput.value);
+
+  const taxaMaquina = obterTaxaMaquininha();
+
+  let gastoCombustivel = 0;
+  if (kmRodado > 0 && consumoVeiculo > 0 && precoGasolina > 0) {
+    gastoCombustivel = (kmRodado / consumoVeiculo) * precoGasolina;
+  }
+
+  const custoDesgasteVeiculo = kmRodado * desgasteKm;
+  const custoVeiculoTotal = gastoCombustivel + custoDesgasteVeiculo;
+  const valorTaxaMaquina = valorCobrado * (taxaMaquina / 100);
+
+  const custoTotal =
+    totalProdutos +
+    custoVeiculoTotal +
+    maoDeObra +
+    valorTaxaMaquina +
+    outrosCustos;
+
+  const lucroFinal = valorCobrado - custoTotal;
+  const margemLucro = valorCobrado > 0 ? (lucroFinal / valorCobrado) * 100 : 0;
+
+  return {
+    dataGeracao: new Date().toLocaleString("pt-BR"),
+    formaPagamento: formaPagamento.options[formaPagamento.selectedIndex].text,
+    taxaMaquina,
+    produtos,
+    totalProdutos,
+    kmRodado,
+    consumoVeiculo,
+    precoGasolina,
+    desgasteKm,
+    gastoCombustivel,
+    custoDesgasteVeiculo,
+    custoVeiculoTotal,
+    maoDeObra,
+    outrosCustos,
+    valorCobrado,
+    valorTaxaMaquina,
+    custoTotal,
+    lucroFinal,
+    margemLucro
+  };
+}
+
+function gerarHtmlRelatorio(dados) {
+  const linhasProdutos = dados.produtos.map((produto) => `
+    <tr>
+      <td>${produto.nome}</td>
+      <td>${formatarMoeda(produto.valor)}</td>
+      <td>${produto.embalagem.toLocaleString("pt-BR")} ml</td>
+      <td>${produto.usado.toLocaleString("pt-BR")} ml</td>
+      <td>${formatarMoeda(produto.custoPorMl)}</td>
+      <td>${formatarMoeda(produto.custoUsado)}</td>
+    </tr>
+  `).join("");
+
+  return `
+    <!DOCTYPE html>
+    <html lang="pt-BR">
+    <head>
+      <meta charset="UTF-8" />
+      <title>Relatório de Custos por Serviço</title>
+      <style>
+        body {
+          font-family: Arial, Helvetica, sans-serif;
+          margin: 32px;
+          color: #1f2937;
+        }
+
+        h1, h2 {
+          margin: 0 0 12px;
+        }
+
+        .topo {
+          margin-bottom: 24px;
+          border-bottom: 2px solid #2563eb;
+          padding-bottom: 16px;
+        }
+
+        .topo p {
+          margin: 4px 0;
+          color: #4b5563;
+        }
+
+        .bloco {
+          margin-bottom: 28px;
+        }
+
+        .card {
+          border: 1px solid #d1d5db;
+          border-radius: 12px;
+          padding: 16px;
+          background: #f9fafb;
+        }
+
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 12px;
+        }
+
+        th, td {
+          border: 1px solid #d1d5db;
+          padding: 10px;
+          text-align: left;
+          font-size: 14px;
+        }
+
+        th {
+          background: #eff6ff;
+        }
+
+        .grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+        }
+
+        .item {
+          padding: 10px 12px;
+          border: 1px solid #e5e7eb;
+          border-radius: 10px;
+          background: #fff;
+        }
+
+        .item strong {
+          display: block;
+          margin-top: 4px;
+        }
+
+        .resultado {
+          border: 2px solid #2563eb;
+          border-radius: 14px;
+          padding: 18px;
+          background: #eff6ff;
+        }
+
+        .resultado .linha {
+          display: flex;
+          justify-content: space-between;
+          gap: 16px;
+          padding: 10px 0;
+          border-bottom: 1px solid #bfdbfe;
+        }
+
+        .resultado .linha:last-child {
+          border-bottom: none;
+        }
+
+        .rodape {
+          margin-top: 30px;
+          font-size: 12px;
+          color: #6b7280;
+          text-align: center;
+        }
+
+        @media print {
+          body {
+            margin: 18px;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="topo">
+        <h1>Relatório de Custos por Serviço</h1>
+        <p><strong>Data de geração:</strong> ${dados.dataGeracao}</p>
+        <p><strong>Forma de pagamento:</strong> ${dados.formaPagamento}</p>
+        <p><strong>Taxa aplicada:</strong> ${formatarPercentual(dados.taxaMaquina)}</p>
+      </div>
+
+      <div class="bloco">
+        <h2>Produtos utilizados</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Valor pago</th>
+              <th>Embalagem</th>
+              <th>Usado</th>
+              <th>Custo por ml</th>
+              <th>Custo usado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${linhasProdutos}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bloco">
+        <h2>Veículo e deslocamento</h2>
+        <div class="grid">
+          <div class="item">KM rodado<strong>${dados.kmRodado.toLocaleString("pt-BR")} km</strong></div>
+          <div class="item">Consumo do veículo<strong>${dados.consumoVeiculo.toLocaleString("pt-BR")} km/L</strong></div>
+          <div class="item">Preço da gasolina<strong>${formatarMoeda(dados.precoGasolina)}</strong></div>
+          <div class="item">Desgaste por km<strong>${formatarMoeda(dados.desgasteKm)}</strong></div>
+          <div class="item">Gasto com combustível<strong>${formatarMoeda(dados.gastoCombustivel)}</strong></div>
+          <div class="item">Desgaste do veículo<strong>${formatarMoeda(dados.custoDesgasteVeiculo)}</strong></div>
+          <div class="item">Custo total do veículo<strong>${formatarMoeda(dados.custoVeiculoTotal)}</strong></div>
+        </div>
+      </div>
+
+      <div class="bloco">
+        <h2>Custos e resultado</h2>
+        <div class="grid">
+          <div class="item">Total dos produtos<strong>${formatarMoeda(dados.totalProdutos)}</strong></div>
+          <div class="item">Mão de obra<strong>${formatarMoeda(dados.maoDeObra)}</strong></div>
+          <div class="item">Outros custos<strong>${formatarMoeda(dados.outrosCustos)}</strong></div>
+          <div class="item">Taxa da maquininha<strong>${formatarMoeda(dados.valorTaxaMaquina)}</strong></div>
+          <div class="item">Valor cobrado<strong>${formatarMoeda(dados.valorCobrado)}</strong></div>
+        </div>
+      </div>
+
+      <div class="resultado">
+        <div class="linha">
+          <span><strong>Custo total do serviço</strong></span>
+          <span><strong>${formatarMoeda(dados.custoTotal)}</strong></span>
+        </div>
+        <div class="linha">
+          <span><strong>Lucro final</strong></span>
+          <span><strong>${formatarMoeda(dados.lucroFinal)}</strong></span>
+        </div>
+        <div class="linha">
+          <span><strong>Margem de lucro</strong></span>
+          <span><strong>${formatarPercentual(dados.margemLucro)}</strong></span>
+        </div>
+      </div>
+
+      <div class="rodape">
+        Relatório gerado pelo sistema de controle de custos por serviço.
+      </div>
+    </body>
+    </html>
+  `;
+}
+
+function gerarRelatorioPdf() {
+  calcularTudo();
+
+  const dados = obterDadosRelatorio();
+  const relatorioHtml = gerarHtmlRelatorio(dados);
+
+  const janela = window.open("", "_blank", "width=1000,height=800");
+
+  if (!janela) {
+    alert("O navegador bloqueou a abertura do relatório. Libere pop-ups para este site.");
+    return;
+  }
+
+  janela.document.open();
+  janela.document.write(relatorioHtml);
+  janela.document.close();
+
+  janela.onload = () => {
+    janela.focus();
+    janela.print();
+  };
+}
+
 
 function recalcularTitulosProdutos() {
   const cards = document.querySelectorAll(".produto-card");
@@ -328,7 +632,7 @@ formaPagamento.addEventListener("change", () => {
 ].forEach((input) => {
   input.addEventListener("input", calcularTudo);
 });
-
+btnGerarPdf.addEventListener("click", gerarRelatorioPdf);
 criarProdutoCard();
 atualizarPercentualTaxa();
 resetarResultados();
