@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Controle de Custos por Serviço</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header class="topo">
+      <h1>Controle de Custos por Serviço</h1>
+      <p>Calcule produto, combustível, veículo, taxas e lucro real de cada serviço.</p>
+    </header>
+
+    <main class="painel">
+      <form id="formulario" novalidate>
+        <section class="bloco">
+          <div class="secao-topo">
+            <h2>1. Produtos Utilizados</h2>
+            <button type="button" id="btnAdicionarProduto" class="btn mini">+ Adicionar produto</button>
+          </div>
+
+          <div id="listaProdutos" class="lista-produtos"></div>
+
+          <div class="total-produtos-box">
+            <span>Total dos produtos usados no serviço</span>
+            <strong id="totalProdutosUsados">R$ 0,00</strong>
+          </div>
+        </section>
+
+        <section class="bloco">
+          <h2>2. Veículo, Combustível e Deslocamento</h2>
+
+          <div class="grid">
+            <div class="campo">
+              <label for="kmRodado">Quilômetros rodados (ida e volta)</label>
+              <input type="number" id="kmRodado" min="0" step="0.01" placeholder="18" />
+            </div>
+
+            <div class="campo">
+              <label for="consumoVeiculo">Consumo do veículo (km/L)</label>
+              <input type="number" id="consumoVeiculo" min="0" step="0.01" placeholder="10" />
+            </div>
+
+            <div class="campo">
+              <label for="precoGasolina">Preço da gasolina na sua cidade (R$)</label>
+              <input type="number" id="precoGasolina" min="0" step="0.01" placeholder="6.19" />
+            </div>
+
+            <div class="campo">
+              <label for="desgasteKm">Desgaste/depreciação por km (R$)</label>
+              <input type="number" id="desgasteKm" min="0" step="0.01" placeholder="0.25" />
+            </div>
+
+            <div class="campo caixa-resultado">
+              <span class="mini-titulo">Gasto com combustível</span>
+              <strong id="gastoCombustivel">R$ 0,00</strong>
+            </div>
+
+            <div class="campo caixa-resultado">
+              <span class="mini-titulo">Custo de desgaste do veículo</span>
+              <strong id="custoDesgasteVeiculo">R$ 0,00</strong>
+            </div>
+
+            <div class="campo caixa-resultado full">
+              <span class="mini-titulo">Custo total do veículo no serviço</span>
+              <strong id="custoVeiculoTotal">R$ 0,00</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="bloco">
+          <h2>3. Outros Custos do Serviço</h2>
+
+          <div class="grid">
+            <div class="campo">
+              <label for="maoDeObra">Custo de mão de obra (R$)</label>
+              <input type="number" id="maoDeObra" min="0" step="0.01" placeholder="40.00" />
+            </div>
+
+            <div class="campo">
+              <label for="outrosCustos">Outros custos adicionais (R$)</label>
+              <input type="number" id="outrosCustos" min="0" step="0.01" placeholder="10.00" />
+            </div>
+
+            <div class="campo">
+              <label for="valorCobrado">Valor cobrado do cliente (R$)</label>
+              <input type="number" id="valorCobrado" min="0" step="0.01" placeholder="180.00" />
+            </div>
+          </div>
+        </section>
+
+        <section class="bloco">
+          <h2>4. Forma de Pagamento</h2>
+
+          <div class="grid">
+            <div class="campo">
+              <label for="formaPagamento">Forma de pagamento</label>
+              <select id="formaPagamento">
+                <option value="dinheiro">Dinheiro</option>
+                <option value="pix">PIX</option>
+                <option value="debito">Cartão de débito</option>
+                <option value="credito">Cartão de crédito</option>
+              </select>
+            </div>
+
+            <div class="campo caixa-resultado">
+              <span class="mini-titulo">Taxa aplicada</span>
+              <strong id="percentualTaxa">0,00%</strong>
+            </div>
+
+            <div class="campo caixa-resultado">
+              <span class="mini-titulo">Taxa da maquininha no serviço</span>
+              <strong id="valorTaxaMaquina">R$ 0,00</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="acoes">
+          <button type="button" id="btnCalcular" class="btn primario">Calcular</button>
+          <button type="reset" id="btnLimpar" class="btn secundario">Limpar campos</button>
+        </section>
+      </form>
+
+      <section class="resumo">
+        <h2>5. Resultado Final</h2>
+
+        <div class="cards">
+          <div class="card-resumo">
+            <span>Total dos produtos</span>
+            <strong id="resProduto">R$ 0,00</strong>
+          </div>
+
+          <div class="card-resumo">
+            <span>Combustível</span>
+            <strong id="resCombustivel">R$ 0,00</strong>
+          </div>
+
+          <div class="card-resumo">
+            <span>Desgaste do veículo</span>
+            <strong id="resDesgaste">R$ 0,00</strong>
+          </div>
+
+          <div class="card-resumo">
+            <span>Custo total do veículo</span>
+            <strong id="resVeiculo">R$ 0,00</strong>
+          </div>
+
+          <div class="card-resumo">
+            <span>Mão de obra</span>
+            <strong id="resMaoDeObra">R$ 0,00</strong>
+          </div>
+
+          <div class="card-resumo">
+            <span>Taxa maquininha</span>
+            <strong id="resTaxa">R$ 0,00</strong>
+          </div>
+
+          <div class="card-resumo">
+            <span>Outros custos</span>
+            <strong id="resOutros">R$ 0,00</strong>
+          </div>
+
+          <div class="card-resumo">
+            <span>Valor cobrado</span>
+            <strong id="resCobrado">R$ 0,00</strong>
+          </div>
+        </div>
+
+        <div class="resultado-final">
+          <div class="linha-resultado">
+            <span>Custo total do serviço</span>
+            <strong id="custoTotal">R$ 0,00</strong>
+          </div>
+
+          <div class="linha-resultado">
+            <span>Lucro final</span>
+            <strong id="lucroFinal">R$ 0,00</strong>
+          </div>
+
+          <div class="linha-resultado">
+            <span>Margem de lucro</span>
+            <strong id="margemLucro">0,00%</strong>
+          </div>
+
+          <p id="mensagemLucro" class="mensagem-lucro neutro">
+            Preencha os dados para calcular.
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
